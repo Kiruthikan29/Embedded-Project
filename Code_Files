@@ -1,0 +1,78 @@
+#include <ESP32Servo.h>
+
+// Define Servo objects
+Servo azimuthServo;   // Controls left-right movement
+Servo elevationServo; // Controls up-down movement
+
+// Define LDR pins
+const int LDR_Top = 32;
+const int LDR_Bottom = 33;
+const int LDR_Left = 34;
+const int LDR_Right = 35;
+
+// Define Servo pins
+const int azimuthServoPin = 18;
+const int elevationServoPin = 19;
+
+// Initial Servo Angles
+int azimuthAngle = 90;   // Horizontal Position
+int elevationAngle = 90; // Vertical Position
+
+void setup() {
+    Serial.begin(115200);
+    
+    // Attach servos
+    azimuthServo.attach(azimuthServoPin);
+    elevationServo.attach(elevationServoPin);
+    
+    // Set LDR pins as input
+    pinMode(LDR_Top, INPUT);
+    pinMode(LDR_Bottom, INPUT);
+    pinMode(LDR_Left, INPUT);
+    pinMode(LDR_Right, INPUT);
+    
+    // Set initial servo position
+    azimuthServo.write(azimuthAngle);
+    elevationServo.write(elevationAngle);
+}
+
+void loop() {
+    // Read LDR sensor values
+    int topValue = analogRead(LDR_Top);
+    int bottomValue = analogRead(LDR_Bottom);
+    int leftValue = analogRead(LDR_Left);
+    int rightValue = analogRead(LDR_Right);
+
+    // Print values for debugging
+    Serial.print("Top: "); Serial.print(topValue);
+    Serial.print(" | Bottom: "); Serial.print(bottomValue);
+    Serial.print(" | Left: "); Serial.print(leftValue);
+    Serial.print(" | Right: "); Serial.println(rightValue);
+
+    // **Horizontal Movement (Left-Right)**
+    int horizontalDifference = leftValue - rightValue;
+    if (horizontalDifference > 50) {
+        azimuthAngle += 2;  // Move Right
+    } else if (horizontalDifference < -50) {
+        azimuthAngle -= 2;  // Move Left
+    }
+
+    // **Vertical Movement (Up-Down)**
+    int verticalDifference = topValue - bottomValue;
+    if (verticalDifference > 50) {
+        elevationAngle += 2;  // Move Up
+    } else if (verticalDifference < -50) {
+        elevationAngle -= 2;  // Move Down
+    }
+
+    // **Limit Servo Movement (0° to 180°)**
+    azimuthAngle = constrain(azimuthAngle, 0, 180);
+    elevationAngle = constrain(elevationAngle, 0, 180);
+
+    // **Move Servos**
+    azimuthServo.write(azimuthAngle);
+    elevationServo.write(elevationAngle);
+
+    // Wait before next adjustment
+    delay(100);
+}
