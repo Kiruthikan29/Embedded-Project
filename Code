@@ -1,0 +1,75 @@
+#include <ESP32Servo.h>
+
+// Create servo objects
+Servo azimuthServo;
+Servo elevationServo;
+
+// Define LDR pins
+const int ldrPinTop = 32;
+const int ldrPinBottom = 33;
+const int ldrPinLeft = 34;
+const int ldrPinRight = 35;
+
+// Define servo pins
+const int azimuthServoPin = 18;
+const int elevationServoPin = 19;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Attach servos to their respective pins
+  azimuthServo.attach(azimuthServoPin);
+  elevationServo.attach(elevationServoPin);
+
+  // Initialize LDR pins as inputs
+  pinMode(ldrPinTop, INPUT);
+  pinMode(ldrPinBottom, INPUT);
+  pinMode(ldrPinLeft, INPUT);
+  pinMode(ldrPinRight, INPUT);
+}
+
+void loop() {
+  // Read values from the LDRs
+  int ldrValueTop = analogRead(ldrPinTop);
+  int ldrValueBottom = analogRead(ldrPinBottom);
+  int ldrValueLeft = analogRead(ldrPinLeft);
+  int ldrValueRight = analogRead(ldrPinRight);
+
+  // Print LDR values to Serial Monitor for debugging
+  Serial.print("Top: "); Serial.print(ldrValueTop);
+  Serial.print("  Bottom: "); Serial.print(ldrValueBottom);
+  Serial.print("  Left: "); Serial.print(ldrValueLeft);
+  Serial.print("  Right: "); Serial.println(ldrValueRight);
+
+  // Calculate differences
+  int verticalDifference = ldrValueTop - ldrValueBottom;
+  int horizontalDifference = ldrValueLeft - ldrValueRight;
+
+  // Get current servo positions
+  int azimuthPos = azimuthServo.read();
+  int elevationPos = elevationServo.read();
+
+  // Adjust azimuth (horizontal) servo position
+  if (horizontalDifference > 100) {
+    azimuthPos += 1; // Move servo to the right
+  } else if (horizontalDifference < -100) {
+    azimuthPos -= 1; // Move servo to the left
+  }
+
+  // Adjust elevation (vertical) servo position
+  if (verticalDifference > 100) {
+    elevationPos += 1; // Move servo up
+  } else if (verticalDifference < -100) {
+    elevationPos -= 1; // Move servo down
+  }
+
+  // Constrain servo positions to 0-180 degrees
+  azimuthPos = constrain(azimuthPos, 0, 180);
+  elevationPos = constrain(elevationPos, 0, 180);
+
+  // Write the new positions to the servos
+  azimuthServo.write(azimuthPos);
+  elevationServo.write(elevationPos);
+
+  delay(100); // Wait a little before the next loop
+}
